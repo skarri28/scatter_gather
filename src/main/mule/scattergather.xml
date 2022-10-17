@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="e4be6187-5849-424c-9bb7-f659cccbe057" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="354bfea2-bab1-484d-9387-741a5b0de449" >
+		<http:request-connection host="training-american-ws.cloudhub.io" port="80" >
+			<reconnection >
+				<reconnect />
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="a5d2bbe5-d9ae-450a-912a-f4074b259e0e" >
+		<http:request-connection host="mu.mulesoft-training.com" port="80" />
+	</http:request-config>
+	<flow name="scattergatherFlow" doc:id="8195b6f1-47be-458c-87dd-230ab1df6a1d" >
+		<http:listener doc:name="Listener" doc:id="11becfcc-2125-4321-baa1-9ecd24e89ca9" path="/scatter" config-ref="HTTP_Listener_config">
+		</http:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="13f46a04-586e-4df5-ba51-e1fb59bc7532" message='#["Before starting Scatter Gather time ::  "  ++ now() as String]'/>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="9a46bdc7-3ff6-4293-a495-6937e8844892" >
+			<route >
+				<http:request method="GET" doc:name="Request" doc:id="67035f71-97d8-4f09-9340-ba199107b245" path="/api/flights" config-ref="HTTP_Request_configuration">
+					<ee:repeatable-file-store-stream bufferUnit="MB" />
+				</http:request>
+				<ee:transform doc:name="Transform Message" doc:id="d8e028ed-1c46-457b-92b7-c371a41d9bf6">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+
+output application/json
+---
+payload
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="9a5decfa-77f7-461b-8922-e931864b92ce" message='#["Time taken to complete First Request" ++ now() as String]' />
+			</route>
+			<route >
+				<http:request method="GET" doc:name="Request" doc:id="432bc521-1743-40ef-a40f-707207ded683" path="/essentials/united/flights" config-ref="HTTP_Request_configuration1" />
+				<ee:transform doc:name="Transform Message" doc:id="3fc98a60-5c00-4c54-9823-4b9e65cc150e">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.flights]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="522e9bc1-8e86-4379-96f6-c4437310704f" message='#["Time taken to complete Second Request" ++ now() as String]' />
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="6b0da423-f8d9-4ab4-83f0-f2aca16a9dd7">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if(payload[0].attributes.statusCode == 200 and payload[1].attributes.statusCode == 200)
+(payload[0].payload) ++ (payload[1].payload)
+else
+payload
+//payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="f0df9f9e-7940-43e8-ab02-8ebc18d70223" >
+				<set-payload value='#["There is an error in one of the process"]' doc:name="Set Payload" doc:id="a54600d9-2db0-498f-9f4b-2d8dc4ab8c0b" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>
