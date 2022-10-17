@@ -24,34 +24,26 @@
 				<artifactId>maven-clean-plugin</artifactId>
 				<version>3.0.0</version>
 			</plugin>
-			<plugin>
-				<groupId>org.mule.tools.maven</groupId>
-				<artifactId>mule-maven-plugin</artifactId>
-				<version>${mule.maven.plugin.version}</version>
-				<extensions>true</extensions>
-				
-			</plugin>
-			<plugin>
-    <groupId>org.mule.tools.maven</groupId>
-    <artifactId>mule-maven-plugin</artifactId> 
-    <version>3.6.3</version>
-     <configuration>
-         <deploymentType>cloudhub</deploymentType>
-         <muleVersion>4.4.0</muleVersion> 
-         <username>sruthi_mallidi</username> 
-         <password>Shaimal@1234</password>
-         <redeploy>true</redeploy>
-         <environment>Sandbox</environment>
-         <domain>${project.basedir}/domain</domain>
-     </configuration>
-     <executions>
-         <execution>
-            <goals>
-            <goal>deploy</goal>
-            </goals>
-         </execution>
-     </executions>
- </plugin>
+						<plugin>
+  <groupId>org.mule.tools.maven</groupId>
+  <artifactId>mule-maven-plugin</artifactId>
+  <version>3.6.3</version>
+  <extensions>true</extensions>
+  <configuration>
+    <cloudHubDeployment>
+      <uri>https://anypoint.mulesoft.com</uri>
+      <muleVersion>4.4.0</muleVersion>
+      <username>sruthi_mallidi</username>
+      <password>Sahimal@1234</password>
+      <applicationName>myfirst</applicationName>
+      <environment>Sandbox</environment>
+      <region>us-west-1</region>
+      <workers>1</workers>
+      <workerType>MICRO</workerType>
+    </cloudHubDeployment>
+  </configuration>
+</plugin>
+			
 		</plugins>
 	</build>
 
